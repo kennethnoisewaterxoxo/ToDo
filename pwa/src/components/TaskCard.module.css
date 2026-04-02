@@ -1,0 +1,106 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.card:hover {
+  background: var(--surface);
+}
+
+.card.selected {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.1s;
+}
+
+.check:hover {
+  border-color: var(--success);
+}
+
+.check:hover .checkInner {
+  background: var(--success);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: block;
+}
+
+.checkInner {
+  display: none;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.list {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.due {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.overdue {
+  color: var(--danger);
+}
+
+.recurring {
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.tag {
+  font-size: 11px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.priority {
+  width: 4px;
+  height: 28px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.priority[data-priority="high"] { background: var(--priority-high); }
+.priority[data-priority="normal"] { background: var(--priority-normal); opacity: 0.4; }
+.priority[data-priority="low"] { background: transparent; }

@@ -1,0 +1,22 @@
+export interface Recurring {
+  interval: number;
+  unit: "days" | "weeks" | "months";
+  next_due: string | null;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  list: string;
+  status: "pending" | "complete" | "snoozed";
+  priority: "low" | "normal" | "high";
+  due: string | null;
+  created: string | null;
+  completed: string | null;
+  snoozed_until: string | null;
+  recurring: Recurring | null;
+  tags: string[];
+  notes: string;
+}
+
+export type TaskSummary = Omit<Task, "notes">;
