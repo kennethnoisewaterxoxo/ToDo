@@ -339,17 +339,9 @@ async def handle_sse(request: Request):
             mcp._mcp_server.create_initialization_options(),
         )
 
-async def handle_messages(scope, receive, send):
-    from starlette.responses import Response
-    request = Request(scope, receive)
-    if not _check_auth(request):
-        await Response("Unauthorized", status_code=401)(scope, receive, send)
-        return
-    await sse_transport.handle_post_message(scope, receive, send)
-
 starlette_app = Starlette(routes=[
     Route("/sse", endpoint=handle_sse),
-    Mount("/messages/", app=handle_messages),
+    Mount("/messages/", app=sse_transport.handle_post_message),
 ])
 
 if __name__ == "__main__":
