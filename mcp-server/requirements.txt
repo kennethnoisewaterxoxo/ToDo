@@ -2,3 +2,5 @@ mcp[cli]
 httpx
 pyyaml
 python-dateutil
+uvicorn
+starlette
