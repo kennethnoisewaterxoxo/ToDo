@@ -320,7 +320,17 @@ from starlette.routing import Mount, Route
 
 sse_transport = SseServerTransport("/messages/")
 
+def _check_auth(request: Request) -> bool:
+    token = os.environ.get("MCP_AUTH_TOKEN")
+    if not token:
+        return True  # no token configured, allow all
+    auth = request.headers.get("Authorization", "")
+    return auth == f"Bearer {token}"
+
 async def handle_sse(request: Request):
+    if not _check_auth(request):
+        from starlette.responses import Response
+        return Response("Unauthorized", status_code=401)
     async with sse_transport.connect_sse(
         request.scope, request.receive, request._send
     ) as streams:
@@ -329,9 +339,15 @@ async def handle_sse(request: Request):
             mcp._mcp_server.create_initialization_options(),
         )
 
+async def handle_messages(request: Request):
+    if not _check_auth(request):
+        from starlette.responses import Response
+        return Response("Unauthorized", status_code=401)
+    await sse_transport.handle_post_message(request.scope, request.receive, request._send)
+
 starlette_app = Starlette(routes=[
     Route("/sse", endpoint=handle_sse),
-    Mount("/messages/", app=sse_transport.handle_post_message),
+    Mount("/messages/", app=handle_messages),
 ])
 
 if __name__ == "__main__":
