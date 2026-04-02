@@ -9,7 +9,8 @@ from mcp.server.fastmcp import FastMCP
 from github_client import GitHubClient
 from models import Task, Recurring
 
-mcp = FastMCP("todo")
+port = int(os.environ.get("PORT", 8000))
+mcp = FastMCP("todo", host="0.0.0.0", port=port)
 gh = GitHubClient()
 
 
@@ -311,5 +312,4 @@ def search_tasks(query: str) -> list[dict]:
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    mcp.run(transport="sse", host="0.0.0.0", port=port)
+    mcp.run(transport="sse")
