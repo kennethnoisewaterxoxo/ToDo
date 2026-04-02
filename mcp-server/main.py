@@ -9,8 +9,10 @@ from mcp.server.fastmcp import FastMCP
 from github_client import GitHubClient
 from models import Task, Recurring
 
-port = int(os.environ.get("PORT", 8000))
-mcp = FastMCP("todo", host="0.0.0.0", port=port)
+os.environ.setdefault("FASTMCP_HOST", "0.0.0.0")
+os.environ["FASTMCP_PORT"] = os.environ.get("PORT", "8000")
+
+mcp = FastMCP("todo")
 gh = GitHubClient()
 
 
