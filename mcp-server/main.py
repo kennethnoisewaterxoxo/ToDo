@@ -310,7 +310,49 @@ def search_tasks(query: str) -> list[dict]:
     return [_task_summary(t) for t in matched]
 
 
+from mcp.server.sse import SseServerTransport
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.routing import Mount, Route
+
+sse_transport = SseServerTransport("/messages/")
+
+def _check_auth(request: Request) -> bool:
+    token = os.environ.get("MCP_AUTH_TOKEN")
+    if not token:
+        return True
+    auth = request.headers.get("Authorization", "")
+    return auth == f"Bearer {token}"
+
+async def handle_sse(request: Request):
+    if not _check_auth(request):
+        from starlette.responses import Response
+        return Response("Unauthorized", status_code=401)
+
+    async def send_with_no_buffer(message):
+        if message["type"] == "http.response.start":
+            headers = list(message.get("headers", []))
+            headers.extend([
+                (b"x-accel-buffering", b"no"),
+                (b"cache-control", b"no-cache"),
+            ])
+            message = {**message, "headers": headers}
+        await request._send(message)
+
+    async with sse_transport.connect_sse(
+        request.scope, request.receive, send_with_no_buffer
+    ) as streams:
+        await mcp._mcp_server.run(
+            streams[0], streams[1],
+            mcp._mcp_server.create_initialization_options(),
+        )
+
+starlette_app = Starlette(routes=[
+    Route("/sse", endpoint=handle_sse),
+    Mount("/messages/", app=sse_transport.handle_post_message),
+])
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(mcp.streamable_http_app(), host="0.0.0.0", port=port)
+    uvicorn.run(starlette_app, host="0.0.0.0", port=port)
