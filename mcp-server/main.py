@@ -315,5 +315,7 @@ def search_tasks(query: str) -> list[dict]:
 
 if __name__ == "__main__":
     import uvicorn
+    from starlette.middleware.trustedhost import TrustedHostMiddleware
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(mcp.sse_app(), host="0.0.0.0", port=port)
+    app = TrustedHostMiddleware(mcp.sse_app(), allowed_hosts=["*"])
+    uvicorn.run(app, host="0.0.0.0", port=port)
