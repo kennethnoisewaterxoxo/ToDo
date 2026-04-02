@@ -9,9 +9,6 @@ from mcp.server.fastmcp import FastMCP
 from github_client import GitHubClient
 from models import Task, Recurring
 
-os.environ.setdefault("FASTMCP_HOST", "0.0.0.0")
-os.environ["FASTMCP_PORT"] = os.environ.get("PORT", "8000")
-
 mcp = FastMCP("todo")
 gh = GitHubClient()
 
@@ -313,38 +310,7 @@ def search_tasks(query: str) -> list[dict]:
     return [_task_summary(t) for t in matched]
 
 
-from mcp.server.sse import SseServerTransport
-from starlette.applications import Starlette
-from starlette.requests import Request
-from starlette.routing import Mount, Route
-
-sse_transport = SseServerTransport("/messages/")
-
-def _check_auth(request: Request) -> bool:
-    token = os.environ.get("MCP_AUTH_TOKEN")
-    if not token:
-        return True  # no token configured, allow all
-    auth = request.headers.get("Authorization", "")
-    return auth == f"Bearer {token}"
-
-async def handle_sse(request: Request):
-    if not _check_auth(request):
-        from starlette.responses import Response
-        return Response("Unauthorized", status_code=401)
-    async with sse_transport.connect_sse(
-        request.scope, request.receive, request._send
-    ) as streams:
-        await mcp._mcp_server.run(
-            streams[0], streams[1],
-            mcp._mcp_server.create_initialization_options(),
-        )
-
-starlette_app = Starlette(routes=[
-    Route("/sse", endpoint=handle_sse),
-    Mount("/messages/", app=sse_transport.handle_post_message),
-])
-
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(starlette_app, host="0.0.0.0", port=port)
+    uvicorn.run(mcp.streamable_http_app(), host="0.0.0.0", port=port)
