@@ -14,10 +14,34 @@
   flex-shrink: 0;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .title {
   font-size: 20px;
   font-weight: 600;
   text-transform: capitalize;
+}
+
+.hamburger {
+  display: none;
+  font-size: 20px;
+  color: var(--text-muted);
+  padding: 4px 6px;
+  border-radius: var(--radius);
+}
+
+.hamburger:hover {
+  color: var(--text);
+}
+
+@media (max-width: 600px) {
+  .hamburger {
+    display: block;
+  }
 }
 
 .actions {

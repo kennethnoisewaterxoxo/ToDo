@@ -14,6 +14,7 @@ interface Props {
   onComplete: (task: Task) => void;
   onRefresh: () => void;
   onUpdate: (task: Task) => Promise<void>;
+  onToggleSidebar: () => void;
 }
 
 function viewTitle(view: View): string {
@@ -23,7 +24,7 @@ function viewTitle(view: View): string {
   return view.list;
 }
 
-export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplete, onRefresh, onUpdate }: Props) {
+export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplete, onRefresh, onUpdate, onToggleSidebar }: Props) {
   const [showAdd, setShowAdd] = useState(false);
 
   const defaultList = typeof view === "object" ? view.list : "inbox";
@@ -31,7 +32,10 @@ export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplet
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h2 className={styles.title}>{viewTitle(view)}</h2>
+        <div className={styles.titleRow}>
+          <button className={styles.hamburger} onClick={onToggleSidebar} title="Menu">☰</button>
+          <h2 className={styles.title}>{viewTitle(view)}</h2>
+        </div>
         <div className={styles.actions}>
           <button className={styles.iconBtn} onClick={onRefresh} title="Refresh">↺</button>
           <button className={styles.addBtn} onClick={() => setShowAdd(true)}>+ Add Task</button>

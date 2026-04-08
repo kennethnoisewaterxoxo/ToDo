@@ -14,6 +14,7 @@ export default function App() {
   const [configured, setConfigured] = useState(isConfigured());
   const [view, setView] = useState<View>("today");
   const [selected, setSelected] = useState<Task | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { tasks, loading, refresh, completeTask, updateTask, deleteTask } = useTasks();
 
   useEffect(() => {
@@ -47,11 +48,16 @@ export default function App() {
 
   return (
     <div className={styles.layout}>
+      {sidebarOpen && (
+        <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
+      )}
       <Sidebar
         view={view}
-        onViewChange={setView}
+        onViewChange={(v) => { setView(v); setSidebarOpen(false); }}
         lists={lists}
         tasks={tasks}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
       <main className={styles.main}>
         <TaskList
@@ -63,6 +69,7 @@ export default function App() {
           onComplete={handleComplete}
           onRefresh={refresh}
           onUpdate={updateTask}
+          onToggleSidebar={() => setSidebarOpen((o) => !o)}
         />
       </main>
       {selected && (

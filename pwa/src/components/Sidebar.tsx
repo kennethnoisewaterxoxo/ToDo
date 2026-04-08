@@ -7,13 +7,15 @@ interface Props {
   onViewChange: (v: View) => void;
   lists: string[];
   tasks: Task[];
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 function count(tasks: Task[], predicate: (t: Task) => boolean) {
   return tasks.filter(predicate).length;
 }
 
-export function Sidebar({ view, onViewChange, lists, tasks }: Props) {
+export function Sidebar({ view, onViewChange, lists, tasks, isOpen, onClose }: Props) {
   const today = new Date().toISOString().split("T")[0];
 
   const todayCount = count(tasks, (t) => t.status === "pending" && !!t.due && t.due <= today);
@@ -25,8 +27,11 @@ export function Sidebar({ view, onViewChange, lists, tasks }: Props) {
   }
 
   return (
-    <nav className={styles.sidebar}>
-      <div className={styles.logo}>ToDo</div>
+    <nav className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
+      <div className={styles.logoRow}>
+        <div className={styles.logo}>ToDo</div>
+        <button className={styles.closeBtn} onClick={onClose}>✕</button>
+      </div>
 
       <section className={styles.section}>
         <NavItem label="Today" badge={todayCount} active={isActive("today")} onClick={() => onViewChange("today")} />
