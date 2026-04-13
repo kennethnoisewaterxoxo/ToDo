@@ -319,21 +319,25 @@ def get_shopping_list() -> list[dict]:
 @mcp.tool()
 def add_shopping_item(
     name: str,
-    quantity: Optional[str] = None,
+    qty: Optional[float] = None,
+    unit: Optional[str] = None,
     category: Optional[str] = None,
 ) -> dict:
     """
     Add an item to the shopping list.
 
     Args:
-        name: Item name (e.g. 'Milk', 'Bread').
-        quantity: Optional quantity (e.g. '2 litres', '500g', '1 dozen').
+        name: Item name (e.g. 'Milk', 'Bread', 'Flour').
+        qty: Optional numeric quantity (e.g. 2, 500, 0.5).
+        unit: Optional unit (e.g. 'g', 'kg', 'ml', 'L', 'tsp', 'tbsp', 'cup', 'oz', 'lb', 'each', 'dozen', 'can', 'bag', 'bunch').
         category: Optional category (e.g. 'dairy', 'produce', 'frozen', 'bakery').
     """
     items = gh.get_shopping_list()
     item: dict = {"id": uuid.uuid4().hex[:8], "name": name}
-    if quantity:
-        item["quantity"] = quantity
+    if qty is not None:
+        item["qty"] = qty
+    if unit:
+        item["unit"] = unit
     if category:
         item["category"] = category
     items.append(item)

@@ -24,7 +24,8 @@ export type TaskSummary = Omit<Task, "notes">;
 export interface ShoppingItem {
   id: string;
   name: string;
-  quantity?: string;
+  qty?: number;
+  unit?: string;
   category?: string;
   checked?: boolean;
 }
