@@ -1,5 +1,5 @@
 import yaml from "js-yaml";
-import type { Task } from "./types";
+import type { Task, ShoppingItem } from "./types";
 
 const GITHUB_API = "https://api.github.com";
 
@@ -136,4 +136,27 @@ export function isConfigured(): boolean {
 export function saveConfig(token: string, repo: string) {
   localStorage.setItem("github_token", token);
   localStorage.setItem("github_repo", repo);
+}
+
+export async function fetchShoppingList(): Promise<ShoppingItem[]> {
+  const resp = await fetch(repoUrl("shopping/list.yaml"), { headers: headers() });
+  if (resp.status === 404) return [];
+  if (!resp.ok) throw new Error(`Failed to fetch shopping list: ${resp.statusText}`);
+  const data = await resp.json();
+  const raw = atob(data.content.replace(/\n/g, ""));
+  const parsed = yaml.load(raw) as { items?: ShoppingItem[] } | null;
+  return parsed?.items ?? [];
+}
+
+export async function saveShoppingList(items: ShoppingItem[], message = "Update shopping list"): Promise<void> {
+  const content = btoa(encodeURIComponent(yaml.dump({ items }, { lineWidth: -1 })).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode(parseInt(p1, 16))));
+  const sha = await getSha("shopping/list.yaml");
+  const body: Record<string, unknown> = { message, content };
+  if (sha) body.sha = sha;
+  const resp = await fetch(repoUrl("shopping/list.yaml"), {
+    method: "PUT",
+    headers: headers(),
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) throw new Error(`Failed to save shopping list: ${resp.statusText}`);
 }

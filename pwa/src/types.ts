@@ -20,3 +20,11 @@ export interface Task {
 }
 
 export type TaskSummary = Omit<Task, "notes">;
+
+export interface ShoppingItem {
+  id: string;
+  name: string;
+  quantity?: string;
+  category?: string;
+  checked?: boolean;
+}

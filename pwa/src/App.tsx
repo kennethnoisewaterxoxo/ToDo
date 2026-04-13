@@ -4,11 +4,12 @@ import { Setup } from "./components/Setup";
 import { Sidebar } from "./components/Sidebar";
 import { TaskList } from "./components/TaskList";
 import { TaskDetail } from "./components/TaskDetail";
+import { ShoppingList } from "./components/ShoppingList";
 import { useTasks } from "./hooks/useTasks";
 import type { Task } from "./types";
 import styles from "./App.module.css";
 
-export type View = "today" | "overdue" | "all" | { list: string };
+export type View = "today" | "overdue" | "all" | "shopping" | { list: string };
 
 export default function App() {
   const [configured, setConfigured] = useState(isConfigured());
@@ -53,24 +54,28 @@ export default function App() {
       )}
       <Sidebar
         view={view}
-        onViewChange={(v) => { setView(v); setSidebarOpen(false); }}
+        onViewChange={(v) => { setView(v); setSidebarOpen(false); if (v === "shopping") setSelected(null); }}
         lists={lists}
         tasks={tasks}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
       <main className={styles.main}>
-        <TaskList
-          tasks={visibleTasks}
-          loading={loading}
-          view={view}
-          onSelect={setSelected}
-          selectedId={selected?.id}
-          onComplete={handleComplete}
-          onRefresh={refresh}
-          onUpdate={updateTask}
-          onToggleSidebar={() => setSidebarOpen((o) => !o)}
-        />
+        {view === "shopping" ? (
+          <ShoppingList onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+        ) : (
+          <TaskList
+            tasks={visibleTasks}
+            loading={loading}
+            view={view}
+            onSelect={setSelected}
+            selectedId={selected?.id}
+            onComplete={handleComplete}
+            onRefresh={refresh}
+            onUpdate={updateTask}
+            onToggleSidebar={() => setSidebarOpen((o) => !o)}
+          />
+        )}
       </main>
       {selected && (
         <TaskDetail

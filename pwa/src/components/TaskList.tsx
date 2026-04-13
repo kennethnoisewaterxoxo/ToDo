@@ -21,7 +21,8 @@ function viewTitle(view: View): string {
   if (view === "today") return "Today";
   if (view === "overdue") return "Overdue";
   if (view === "all") return "All Tasks";
-  return view.list;
+  if (typeof view === "object") return view.list;
+  return view;
 }
 
 export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplete, onRefresh, onUpdate, onToggleSidebar }: Props) {

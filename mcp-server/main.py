@@ -310,6 +310,61 @@ def search_tasks(query: str) -> list[dict]:
     return [_task_summary(t) for t in matched]
 
 
+@mcp.tool()
+def get_shopping_list() -> list[dict]:
+    """Return all items on the shopping list."""
+    return gh.get_shopping_list()
+
+
+@mcp.tool()
+def add_shopping_item(
+    name: str,
+    quantity: Optional[str] = None,
+    category: Optional[str] = None,
+) -> dict:
+    """
+    Add an item to the shopping list.
+
+    Args:
+        name: Item name (e.g. 'Milk', 'Bread').
+        quantity: Optional quantity (e.g. '2 litres', '500g', '1 dozen').
+        category: Optional category (e.g. 'dairy', 'produce', 'frozen', 'bakery').
+    """
+    items = gh.get_shopping_list()
+    item: dict = {"id": uuid.uuid4().hex[:8], "name": name}
+    if quantity:
+        item["quantity"] = quantity
+    if category:
+        item["category"] = category
+    items.append(item)
+    gh.save_shopping_list(items, f"Add shopping item: {name}")
+    return item
+
+
+@mcp.tool()
+def remove_shopping_item(item_id: str) -> dict:
+    """
+    Remove an item from the shopping list by ID.
+
+    Args:
+        item_id: The item ID to remove (use get_shopping_list to find IDs).
+    """
+    items = gh.get_shopping_list()
+    before = len(items)
+    items = [i for i in items if i.get("id") != item_id]
+    if len(items) == before:
+        return {"error": f"Item {item_id} not found"}
+    gh.save_shopping_list(items, f"Remove shopping item {item_id}")
+    return {"removed": item_id}
+
+
+@mcp.tool()
+def clear_shopping_list() -> dict:
+    """Clear all items from the shopping list."""
+    gh.save_shopping_list([], "Clear shopping list")
+    return {"cleared": True}
+
+
 from mcp.server.sse import SseServerTransport
 from starlette.applications import Starlette
 from starlette.requests import Request

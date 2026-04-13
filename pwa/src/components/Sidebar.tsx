@@ -39,6 +39,11 @@ export function Sidebar({ view, onViewChange, lists, tasks, isOpen, onClose }: P
         <NavItem label="All Tasks" active={isActive("all")} onClick={() => onViewChange("all")} />
       </section>
 
+      <section className={styles.section}>
+        <div className={styles.sectionLabel}>Other</div>
+        <NavItem label="Shopping List" active={isActive("shopping")} onClick={() => onViewChange("shopping")} />
+      </section>
+
       {lists.length > 0 && (
         <section className={styles.section}>
           <div className={styles.sectionLabel}>Lists</div>

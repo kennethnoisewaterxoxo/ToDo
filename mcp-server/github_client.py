@@ -144,6 +144,27 @@ class GitHubClient:
             resp.raise_for_status()
             return [item["name"] for item in resp.json() if item["type"] == "dir"]
 
+    def get_shopping_list(self) -> list[dict]:
+        with httpx.Client() as client:
+            resp = client.get(self._url("shopping/list.yaml"), headers=self.headers)
+            if resp.status_code == 404:
+                return []
+            resp.raise_for_status()
+            raw = base64.b64decode(resp.json()["content"]).decode("utf-8")
+            data = yaml.safe_load(raw)
+            return data.get("items", []) if data else []
+
+    def save_shopping_list(self, items: list[dict], message: str = "Update shopping list"):
+        content = yaml.dump({"items": items}, default_flow_style=False, allow_unicode=True)
+        encoded = base64.b64encode(content.encode()).decode()
+        sha = self._get_sha("shopping/list.yaml")
+        payload = {"message": message, "content": encoded}
+        if sha:
+            payload["sha"] = sha
+        with httpx.Client() as client:
+            resp = client.put(self._url("shopping/list.yaml"), headers=self.headers, json=payload)
+            resp.raise_for_status()
+
     def _file_exists(self, path: str) -> bool:
         return self._get_sha(path) is not None
 
