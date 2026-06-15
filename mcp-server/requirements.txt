@@ -1,6 +1,10 @@
-mcp[cli]
-httpx
-pyyaml
-python-dateutil
-uvicorn
-starlette
+# Pinned 2026-06-14 to the versions running on the verified-healthy Railway deploy.
+# Reason: main.py uses private mcp SDK APIs (mcp._mcp_server, SseServerTransport),
+# which break across mcp releases. Unpinned deps let a rebuild pull a newer mcp and
+# crash the container on startup. Bump deliberately, not by accident.
+mcp[cli]==1.27.2
+httpx==0.28.1
+pyyaml==6.0.3
+python-dateutil==2.9.0.post0
+uvicorn==0.49.0
+starlette==1.3.1
