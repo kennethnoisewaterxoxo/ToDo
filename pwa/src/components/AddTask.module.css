@@ -12,11 +12,20 @@
 .row {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .row input,
 .row select {
   flex: 1;
+  min-width: 120px;
+}
+
+@media (max-width: 600px) {
+  .form {
+    margin: 0 12px 8px;
+    padding: 12px;
+  }
 }
 
 .btns {

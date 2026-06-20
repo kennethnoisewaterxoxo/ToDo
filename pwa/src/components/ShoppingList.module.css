@@ -279,6 +279,40 @@
   color: var(--danger);
 }
 
+/* Touch devices have no hover, so always show the row actions */
+@media (hover: none) {
+  .editBtn,
+  .deleteBtn {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .header {
+    padding: 14px 12px 12px;
+  }
+
+  .addRow {
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+
+  .nameInput {
+    flex-basis: 100%;
+  }
+
+  .list {
+    padding: 10px 10px;
+  }
+
+  .editBtn,
+  .deleteBtn {
+    opacity: 1;
+    font-size: 16px;
+    padding: 4px 8px;
+  }
+}
+
 .itemEditing {
   display: flex;
   align-items: center;

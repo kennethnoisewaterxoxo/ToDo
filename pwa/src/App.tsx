@@ -78,7 +78,11 @@ export default function App() {
         )}
       </main>
       {selected && (
+        <div className={styles.detailOverlay} onClick={() => setSelected(null)} />
+      )}
+      {selected && (
         <TaskDetail
+          key={selected.id}
           task={selected}
           onClose={() => setSelected(null)}
           onUpdate={async (updated) => {

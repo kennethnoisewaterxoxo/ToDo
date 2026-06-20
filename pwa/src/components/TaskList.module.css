@@ -90,3 +90,21 @@
   text-align: center;
   margin-top: 60px;
 }
+
+@media (max-width: 600px) {
+  .header {
+    padding: 14px 12px 12px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .list {
+    padding: 10px 10px;
+  }
+
+  .addBtn {
+    padding: 7px 12px;
+  }
+}

@@ -8,6 +8,29 @@
   overflow: hidden;
 }
 
+/* Below ~900px the detail floats over the list as a right-hand drawer
+   so the task list keeps usable width instead of being crushed. */
+@media (max-width: 900px) {
+  .panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 360px;
+    max-width: 100%;
+    z-index: 30;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@media (max-width: 600px) {
+  .panel {
+    width: 100%;
+    border-left: none;
+  }
+}
+
 .header {
   display: flex;
   align-items: center;
