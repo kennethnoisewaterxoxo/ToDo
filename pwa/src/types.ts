@@ -4,6 +4,12 @@ export interface Recurring {
   next_due: string | null;
 }
 
+export interface Subtask {
+  id: string;
+  title: string;
+  done: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -16,6 +22,7 @@ export interface Task {
   snoozed_until: string | null;
   recurring: Recurring | null;
   tags: string[];
+  subtasks: Subtask[];
   notes: string;
 }
 

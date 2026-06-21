@@ -22,6 +22,8 @@ function isOverdue(due: string | null): boolean {
 
 export function TaskCard({ task, selected, onSelect, onComplete }: Props) {
   const overdue = isOverdue(task.due);
+  const subtaskTotal = task.subtasks?.length ?? 0;
+  const subtaskDone = task.subtasks?.filter((s) => s.done).length ?? 0;
 
   return (
     <div
@@ -47,6 +49,9 @@ export function TaskCard({ task, selected, onSelect, onComplete }: Props) {
             </span>
           )}
           {task.recurring && <span className={styles.recurring}>↻</span>}
+          {subtaskTotal > 0 && (
+            <span className={styles.subtasks}>☑ {subtaskDone}/{subtaskTotal}</span>
+          )}
           {task.tags.map((tag) => (
             <span key={tag} className={styles.tag}>{tag}</span>
           ))}

@@ -62,6 +62,7 @@ class GitHubClient:
             snoozed_until=self._parse_date(fm.get("snoozed_until")),
             recurring=recurring,
             tags=fm.get("tags") or [],
+            subtasks=fm.get("subtasks") or [],
             notes=notes,
         )
 

@@ -86,6 +86,11 @@
   color: var(--accent);
 }
 
+.subtasks {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 .tag {
   font-size: 11px;
   color: var(--accent);

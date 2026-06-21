@@ -5,6 +5,7 @@ import styles from "./AddTask.module.css";
 
 interface Props {
   defaultList: string;
+  defaultDue?: string;
   onAdd: (task: Task) => Promise<void>;
   onCancel: () => void;
 }
@@ -15,10 +16,10 @@ function makeId(title: string): string {
   return `${new Date().toISOString().split("T")[0]}-${slug}-${short}`;
 }
 
-export function AddTask({ defaultList, onAdd, onCancel }: Props) {
+export function AddTask({ defaultList, defaultDue = "", onAdd, onCancel }: Props) {
   const [title, setTitle] = useState("");
   const [list, setList] = useState(defaultList);
-  const [due, setDue] = useState("");
+  const [due, setDue] = useState(defaultDue);
   const [priority, setPriority] = useState<Task["priority"]>("normal");
   const [recurringInterval, setRecurringInterval] = useState("");
   const [recurringUnit, setRecurringUnit] = useState<"days" | "weeks" | "months">("weeks");
@@ -43,6 +44,7 @@ export function AddTask({ defaultList, onAdd, onCancel }: Props) {
         ? { interval: Number(recurringInterval), unit: recurringUnit, next_due: null }
         : null,
       tags: [],
+      subtasks: [],
       notes: "",
     };
 

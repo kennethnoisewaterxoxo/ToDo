@@ -53,6 +53,7 @@ export function useTasks() {
         due: nextDueDate,
         created: new Date().toISOString().split("T")[0],
         completed: null,
+        subtasks: task.subtasks.map((st) => ({ ...st, done: false })),
         recurring: { ...task.recurring, next_due: nextNextDue },
       };
       await writeTask(next, `Create next recurrence: ${task.title}`);

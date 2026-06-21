@@ -23,6 +23,7 @@ class Task:
     snoozed_until: Optional[date] = None
     recurring: Optional[Recurring] = None
     tags: list = field(default_factory=list)
+    subtasks: list = field(default_factory=list)  # [{id, title, done}]
     notes: str = ""
 
     def to_frontmatter(self) -> dict:
@@ -37,6 +38,7 @@ class Task:
             "completed": self.completed.isoformat() if self.completed else None,
             "snoozed_until": self.snoozed_until.isoformat() if self.snoozed_until else None,
             "tags": self.tags,
+            "subtasks": self.subtasks,
         }
         if self.recurring:
             d["recurring"] = {

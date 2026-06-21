@@ -29,6 +29,8 @@ export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplet
   const [showAdd, setShowAdd] = useState(false);
 
   const defaultList = typeof view === "object" ? view.list : "inbox";
+  // On the Today view, prefill the due date so new tasks land in Today.
+  const defaultDue = view === "today" ? new Date().toISOString().split("T")[0] : "";
 
   return (
     <div className={styles.container}>
@@ -46,6 +48,7 @@ export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplet
       {showAdd && (
         <AddTask
           defaultList={defaultList}
+          defaultDue={defaultDue}
           onAdd={async (task) => {
             await onUpdate(task);
             setShowAdd(false);

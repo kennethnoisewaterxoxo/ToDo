@@ -145,6 +145,136 @@
   line-height: 1.6;
 }
 
+.subtasks {
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subtasksHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.subtaskProgress {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface2);
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+
+.subtask {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-radius: var(--radius);
+}
+
+.subtask:hover {
+  background: var(--surface2);
+}
+
+.subtaskCheck {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid var(--border);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.1s, background 0.1s;
+}
+
+.subtaskCheck:hover {
+  border-color: var(--accent);
+}
+
+.subtaskDone .subtaskCheck {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.subtaskTitle {
+  flex: 1;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.subtaskDone .subtaskTitle {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.subtaskDelete {
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: var(--radius);
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity 0.1s, color 0.1s;
+}
+
+.subtask:hover .subtaskDelete {
+  opacity: 1;
+}
+
+.subtaskDelete:hover {
+  color: var(--danger);
+}
+
+.subtaskAdd {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.subtaskInput {
+  flex: 1;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+.subtaskAddBtn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 34px;
+  border-radius: var(--radius);
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.subtaskAddBtn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.subtaskAddBtn:disabled {
+  opacity: 0.4;
+}
+
+/* Touch devices have no hover, so always show the remove button */
+@media (hover: none) {
+  .subtaskDelete {
+    opacity: 1;
+  }
+}
+
 .editForm {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,10 @@
 import { useState } from "react";
-import type { Task } from "../types";
+import type { Subtask, Task } from "../types";
 import styles from "./TaskDetail.module.css";
+
+function makeSubtaskId(): string {
+  return Math.random().toString(36).slice(2, 10);
+}
 
 interface Props {
   task: Task;
@@ -23,9 +27,38 @@ export function TaskDetail({ task, onClose, onUpdate, onComplete, onDelete }: Pr
   const [draft, setDraft] = useState<Task>(task);
   const [saving, setSaving] = useState(false);
 
+  // Subtasks are edited inline (checklist) and kept in local state for a
+  // snappy toggle, then persisted in the background. The component is keyed
+  // by task id in App, so this re-seeds when a different task is selected.
+  const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks);
+  const [newSubtask, setNewSubtask] = useState("");
+
+  const doneCount = subtasks.filter((s) => s.done).length;
+
+  function persistSubtasks(next: Subtask[]) {
+    setSubtasks(next);
+    void onUpdate({ ...task, subtasks: next });
+  }
+
+  function addSubtask() {
+    const title = newSubtask.trim();
+    if (!title) return;
+    persistSubtasks([...subtasks, { id: makeSubtaskId(), title, done: false }]);
+    setNewSubtask("");
+  }
+
+  function toggleSubtask(id: string) {
+    persistSubtasks(subtasks.map((s) => (s.id === id ? { ...s, done: !s.done } : s)));
+  }
+
+  function removeSubtask(id: string) {
+    persistSubtasks(subtasks.filter((s) => s.id !== id));
+  }
+
   async function handleSave() {
     setSaving(true);
-    await onUpdate(draft);
+    // Preserve any inline subtask edits made outside the form.
+    await onUpdate({ ...draft, subtasks });
     setSaving(false);
     setEditing(false);
   }
@@ -153,6 +186,52 @@ export function TaskDetail({ task, onClose, onUpdate, onComplete, onDelete }: Pr
             )}
           </>
         )}
+
+        <div className={styles.subtasks}>
+          <div className={styles.subtasksHeader}>
+            <span className={styles.notesLabel}>Subtasks</span>
+            {subtasks.length > 0 && (
+              <span className={styles.subtaskProgress}>{doneCount}/{subtasks.length}</span>
+            )}
+          </div>
+
+          {subtasks.map((st) => (
+            <div key={st.id} className={`${styles.subtask} ${st.done ? styles.subtaskDone : ""}`}>
+              <button
+                className={styles.subtaskCheck}
+                onClick={() => toggleSubtask(st.id)}
+                aria-label={st.done ? "Mark subtask incomplete" : "Mark subtask complete"}
+              >
+                {st.done ? "✓" : ""}
+              </button>
+              <span className={styles.subtaskTitle}>{st.title}</span>
+              <button
+                className={styles.subtaskDelete}
+                onClick={() => removeSubtask(st.id)}
+                aria-label="Remove subtask"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+
+          <div className={styles.subtaskAdd}>
+            <input
+              className={styles.subtaskInput}
+              placeholder="Add subtask…"
+              value={newSubtask}
+              onChange={(e) => setNewSubtask(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") addSubtask(); }}
+            />
+            <button
+              className={styles.subtaskAddBtn}
+              onClick={addSubtask}
+              disabled={!newSubtask.trim()}
+            >
+              +
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className={styles.footer}>

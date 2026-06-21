@@ -44,6 +44,7 @@ function parseTask(path: string, raw: string): Task {
       ? (fm.recurring as Task["recurring"])
       : null,
     tags: (fm.tags as string[]) ?? [],
+    subtasks: (fm.subtasks as Task["subtasks"]) ?? [],
     notes,
   };
 }
