@@ -13,7 +13,7 @@ interface Props {
   onSelect: (task: Task) => void;
   onComplete: (task: Task) => void;
   onRefresh: () => void;
-  onUpdate: (task: Task) => Promise<void>;
+  onAddTask: (task: Task) => void;
   onToggleSidebar: () => void;
 }
 
@@ -25,7 +25,7 @@ function viewTitle(view: View): string {
   return view;
 }
 
-export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplete, onRefresh, onUpdate, onToggleSidebar }: Props) {
+export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplete, onRefresh, onAddTask, onToggleSidebar }: Props) {
   const [showAdd, setShowAdd] = useState(false);
 
   const defaultList = typeof view === "object" ? view.list : "inbox";
@@ -49,8 +49,8 @@ export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplet
         <AddTask
           defaultList={defaultList}
           defaultDue={defaultDue}
-          onAdd={async (task) => {
-            await onUpdate(task);
+          onAdd={(task) => {
+            onAddTask(task);
             setShowAdd(false);
           }}
           onCancel={() => setShowAdd(false)}

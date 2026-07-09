@@ -6,7 +6,7 @@ import styles from "./AddTask.module.css";
 interface Props {
   defaultList: string;
   defaultDue?: string;
-  onAdd: (task: Task) => Promise<void>;
+  onAdd: (task: Task) => void;
   onCancel: () => void;
 }
 
@@ -48,8 +48,13 @@ export function AddTask({ defaultList, defaultDue = "", onAdd, onCancel }: Props
       notes: "",
     };
 
-    await writeTask(task, `Create task: ${task.title}`);
-    await onAdd(task);
+    try {
+      await writeTask(task, `Create task: ${task.title}`);
+      onAdd(task);
+    } catch (err) {
+      alert(`Failed to save task: ${err instanceof Error ? err.message : err}`);
+      setSaving(false);
+    }
   }
 
   return (

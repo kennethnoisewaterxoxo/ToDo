@@ -73,10 +73,16 @@ export function useTasks() {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
   }, []);
 
+  const addTask = useCallback((task: Task) => {
+    setTasks((prev) =>
+      [...prev, task].sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999"))
+    );
+  }, []);
+
   const deleteTask = useCallback(async (task: Task) => {
     await ghDeleteTask(task, `Delete task: ${task.title}`);
     setTasks((prev) => prev.filter((t) => t.id !== task.id));
   }, []);
 
-  return { tasks, loading, refresh, completeTask, updateTask, deleteTask };
+  return { tasks, loading, refresh, completeTask, updateTask, addTask, deleteTask };
 }

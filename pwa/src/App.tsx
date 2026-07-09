@@ -16,7 +16,7 @@ export default function App() {
   const [view, setView] = useState<View>("today");
   const [selected, setSelected] = useState<Task | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { tasks, loading, refresh, completeTask, updateTask, deleteTask } = useTasks();
+  const { tasks, loading, refresh, completeTask, updateTask, addTask, deleteTask } = useTasks();
 
   useEffect(() => {
     if (configured) refresh();
@@ -72,7 +72,7 @@ export default function App() {
             selectedId={selected?.id}
             onComplete={handleComplete}
             onRefresh={refresh}
-            onUpdate={updateTask}
+            onAddTask={addTask}
             onToggleSidebar={() => setSidebarOpen((o) => !o)}
           />
         )}
