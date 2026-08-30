@@ -93,6 +93,16 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
+// GitHub returns file contents as base64 of the raw UTF-8 bytes. atob() alone
+// yields a Latin-1 byte string, so any multi-byte char (—, curly quotes, °, ≥…)
+// turns into C1 control chars that js-yaml rejects as non-printable. Decode the
+// bytes as UTF-8 instead.
+function decodeBase64Utf8(b64: string): string {
+  const binary = atob(b64.replace(/\s/g, ""));
+  const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
 function parseTask(path: string, raw: string): Task {
   const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)/);
   if (!match) throw new Error(`Invalid task file: ${path}`);
@@ -166,8 +176,7 @@ export async function fetchAllTasks(): Promise<Task[]> {
     }
     const data = await fileResp.json();
     try {
-      const raw = atob(data.content.replace(/\n/g, ""));
-      return parseTask(file.path, raw);
+      return parseTask(file.path, decodeBase64Utf8(data.content));
     } catch (err) {
       console.warn(`Skipping malformed task file ${file.path}:`, err);
       return null;
@@ -222,8 +231,7 @@ export async function fetchShoppingList(): Promise<ShoppingItem[]> {
   if (resp.status === 404) return [];
   if (!resp.ok) throw new Error(`Failed to fetch shopping list: ${resp.statusText}`);
   const data = await resp.json();
-  const raw = atob(data.content.replace(/\n/g, ""));
-  const parsed = yaml.load(raw) as { items?: ShoppingItem[] } | null;
+  const parsed = yaml.load(decodeBase64Utf8(data.content)) as { items?: ShoppingItem[] } | null;
   return parsed?.items ?? [];
 }
 
