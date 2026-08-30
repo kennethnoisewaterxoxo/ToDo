@@ -8,6 +8,7 @@ import styles from "./TaskList.module.css";
 interface Props {
   tasks: Task[];
   loading: boolean;
+  error?: string | null;
   view: View;
   selectedId?: string;
   onSelect: (task: Task) => void;
@@ -25,7 +26,7 @@ function viewTitle(view: View): string {
   return view;
 }
 
-export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplete, onRefresh, onAddTask, onToggleSidebar }: Props) {
+export function TaskList({ tasks, loading, error, view, selectedId, onSelect, onComplete, onRefresh, onAddTask, onToggleSidebar }: Props) {
   const [showAdd, setShowAdd] = useState(false);
 
   const defaultList = typeof view === "object" ? view.list : "inbox";
@@ -55,6 +56,12 @@ export function TaskList({ tasks, loading, view, selectedId, onSelect, onComplet
           }}
           onCancel={() => setShowAdd(false)}
         />
+      )}
+
+      {error && (
+        <div className={styles.error} role="alert">
+          Couldn't load the full list ({error}). Showing the last known tasks — hit ↺ to retry.
+        </div>
       )}
 
       <div className={styles.list}>

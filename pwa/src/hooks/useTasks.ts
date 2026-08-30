@@ -20,9 +20,11 @@ function makeId(title: string): string {
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const all = await fetchAllTasks();
       all.sort((a, b) => {
@@ -32,6 +34,9 @@ export function useTasks() {
         return a.due.localeCompare(b.due);
       });
       setTasks(all);
+    } catch (e) {
+      // Don't clear the last good list — show what we have plus a warning.
+      setError(e instanceof Error ? e.message : "Failed to load tasks");
     } finally {
       setLoading(false);
     }
@@ -84,5 +89,5 @@ export function useTasks() {
     setTasks((prev) => prev.filter((t) => t.id !== task.id));
   }, []);
 
-  return { tasks, loading, refresh, completeTask, updateTask, addTask, deleteTask };
+  return { tasks, loading, error, refresh, completeTask, updateTask, addTask, deleteTask };
 }
