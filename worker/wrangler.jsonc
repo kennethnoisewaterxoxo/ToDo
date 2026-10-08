@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "todo-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": { "enabled": true },
+  "vars": {
+    "GITHUB_REPO": "kennethnoisewaterxoxo/todo-tasks",
+    "TIMEZONE": "America/Los_Angeles",
+    // OAuth redirect targets allowed on the /authorize page (claude.ai connectors).
+    "ALLOWED_REDIRECT_HOSTS": "claude.ai,claude.com"
+  },
+  // Secrets (not in this file): GITHUB_TOKEN, AUTH_PASSPHRASE
+  //   npx wrangler secret put GITHUB_TOKEN
+  //   npx wrangler secret put AUTH_PASSPHRASE
+  "kv_namespaces": [
+    // OAuth clients, grants and tokens. Create with: npx wrangler kv namespace create OAUTH_KV
+    { "binding": "OAUTH_KV", "id": "7583bc1f86d44c8b96718ed0cf8983b5" }
+  ]
+}

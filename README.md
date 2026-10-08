@@ -17,9 +17,9 @@ There are two ways to interact with your tasks:
 ```
 GitHub repo (private)          ← your task files live here
         ↕ GitHub API
-        ├── MCP Server          ← Python, hosted on Railway
-        │     ↕ MCP protocol
-        │   Claude Desktop / Claude Mobile
+        ├── MCP Worker          ← TypeScript, Cloudflare Workers (OAuth-protected)
+        │     ↕ MCP (stateless Streamable HTTP)
+        │   Claude (desktop, mobile, web) via a claude.ai custom connector
         │
         └── PWA                 ← React, hosted on GitHub Pages
               ↕ browser
@@ -70,10 +70,11 @@ Claude has access to the following tools:
 | `delete_task` | Permanently remove a task |
 | `search_tasks` | Search by title or notes |
 | `get_lists` | List all task lists |
+| `get_shopping_list` / `add_shopping_item` / `remove_shopping_item` / `clear_shopping_list` | Manage the shopping list |
 
 ## Components
 
-- **`mcp-server/`** — Python MCP server using FastMCP, deployed to Railway
+- **`worker/`** — MCP server in TypeScript on Cloudflare Workers
 - **`pwa/`** — React + Vite PWA, deployed to GitHub Pages via GitHub Actions
 - **Task data repo** — separate private GitHub repository (`todo-tasks`)
 
@@ -81,6 +82,14 @@ Claude has access to the following tools:
 
 1. Create a private GitHub repo for task data with a `tasks/inbox/` folder
 2. Generate a GitHub Personal Access Token with `repo` scope
-3. Deploy the MCP server to Railway with `GITHUB_TOKEN`, `GITHUB_REPO`, and `MCP_AUTH_TOKEN` env vars
-4. Configure Claude Desktop to connect via `mcp-remote`
-5. Open the PWA and enter your token and repo name on the setup screen
+3. Deploy the Worker, from `worker/`:
+   ```sh
+   npm install
+   npx wrangler login
+   npx wrangler kv namespace create OAUTH_KV   # paste the id into wrangler.jsonc
+   npx wrangler secret put GITHUB_TOKEN
+   npx wrangler secret put AUTH_PASSPHRASE     # typed once when connecting Claude
+   npx wrangler deploy
+   ```
+   In claude.ai (Settings → Connectors → Add custom connector) use `https://todo-mcp.<subdomain>.workers.dev/mcp` and enter the passphrase when asked. The connector then appears in Claude on desktop, mobile and web. `npm test` runs the tool tests against a fake GitHub; `npm run dev` runs it locally (put dev values in `.dev.vars`).
+4. Open the PWA and enter your token and repo name on the setup screen
