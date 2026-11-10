@@ -9,13 +9,14 @@ interface Props {
   tasks: Task[];
   isOpen: boolean;
   onClose: () => void;
+  onOpenSettings: () => void;
 }
 
 function count(tasks: Task[], predicate: (t: Task) => boolean) {
   return tasks.filter(predicate).length;
 }
 
-export function Sidebar({ view, onViewChange, lists, tasks, isOpen, onClose }: Props) {
+export function Sidebar({ view, onViewChange, lists, tasks, isOpen, onClose, onOpenSettings }: Props) {
   const today = new Date().toISOString().split("T")[0];
 
   const todayCount = count(tasks, (t) => t.status === "pending" && !!t.due && t.due <= today);
@@ -61,6 +62,10 @@ export function Sidebar({ view, onViewChange, lists, tasks, isOpen, onClose }: P
           })}
         </section>
       )}
+
+      <section className={`${styles.section} ${styles.footer}`}>
+        <NavItem label="GitHub connection" active={false} onClick={onOpenSettings} />
+      </section>
     </nav>
   );
 }

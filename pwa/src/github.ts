@@ -312,6 +312,10 @@ export async function fetchAllTasks(): Promise<Task[]> {
 }
 
 async function fetchAllTasksRest(): Promise<SyncedFiles> {
+  // getLists treats a 404 as "no tasks folder yet", which is also what a wrong
+  // repo name or a revoked token looks like. Rule those out first.
+  const { token, repo } = getConfig();
+  await checkConnection(token, repo);
   const lists = await getLists();
 
   // Enumerate every task file across all lists first, with bounded concurrency.
@@ -382,6 +386,32 @@ export function isConfigured(): boolean {
 export function saveConfig(token: string, repo: string) {
   localStorage.setItem("github_token", token);
   localStorage.setItem("github_repo", repo);
+}
+
+export function getSavedConfig(): { token: string | null; repo: string | null } {
+  return { token: localStorage.getItem("github_token"), repo: localStorage.getItem("github_repo") };
+}
+
+// Confirm the token works and can see the repo. Throws a readable message if not,
+// so a typo or a revoked token is reported instead of looking like an empty repo.
+export async function checkConnection(token: string, repo: string): Promise<void> {
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+    throw new Error("Repository must look like owner/name.");
+  }
+  let resp: Response;
+  try {
+    resp = await fetch(`${GITHUB_API}/repos/${repo}`, {
+      cache: "no-store",
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" },
+    });
+  } catch {
+    throw new Error("Couldn't reach GitHub. Check your internet connection.");
+  }
+  if (resp.status === 401) throw new Error("GitHub rejected the token. It may be mistyped, expired or revoked.");
+  if (resp.status === 404) {
+    throw new Error(`Repository ${repo} wasn't found, or the token doesn't have access to it.`);
+  }
+  if (!resp.ok) throw new Error(`GitHub returned ${resp.status} ${resp.statusText}.`);
 }
 
 export async function fetchShoppingList(): Promise<ShoppingItem[]> {

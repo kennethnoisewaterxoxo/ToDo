@@ -119,3 +119,10 @@
   background: var(--danger) !important;
   color: white !important;
 }
+
+/* Pinned to the bottom of the sidebar, below the lists. */
+.footer {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}

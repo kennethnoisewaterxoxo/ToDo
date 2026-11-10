@@ -16,6 +16,7 @@ export default function App() {
   const [view, setView] = useState<View>("today");
   const [selected, setSelected] = useState<Task | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editingConnection, setEditingConnection] = useState(false);
   const { tasks, loading, error, refresh, completeTask, updateTask, addTask, deleteTask } = useTasks();
 
   useEffect(() => {
@@ -47,6 +48,16 @@ export default function App() {
     return <Setup onConfigured={() => setConfigured(true)} />;
   }
 
+  if (editingConnection) {
+    return (
+      <Setup
+        // Reload so every view starts fresh against the (possibly different) repo.
+        onConfigured={() => window.location.reload()}
+        onCancel={() => setEditingConnection(false)}
+      />
+    );
+  }
+
   return (
     <div className={styles.layout}>
       {sidebarOpen && (
@@ -59,6 +70,7 @@ export default function App() {
         tasks={tasks}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onOpenSettings={() => { setSidebarOpen(false); setEditingConnection(true); }}
       />
       <main className={styles.main}>
         {view === "shopping" ? (

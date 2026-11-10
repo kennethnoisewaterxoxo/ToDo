@@ -63,3 +63,26 @@
 .btn:hover {
   background: var(--accent-hover);
 }
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.card p.error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0;
+}
+
+.cancelBtn {
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  padding: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cancelBtn:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
