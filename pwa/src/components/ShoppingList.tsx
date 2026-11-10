@@ -164,6 +164,11 @@ export function ShoppingList({ onToggleSidebar }: Props) {
     await persist(items.filter((i) => !i.checked), "Remove checked shopping items");
   }
 
+  async function clearAll() {
+    if (!window.confirm(`Clear all ${items.length} item${items.length === 1 ? "" : "s"} from the shopping list?`)) return;
+    await persist([], "Clear shopping list");
+  }
+
   const checkedCount = items.filter((i) => i.checked).length;
 
   const grouped = items.reduce<Record<string, ShoppingItem[]>>((acc, item) => {
@@ -186,6 +191,11 @@ export function ShoppingList({ onToggleSidebar }: Props) {
           {checkedCount > 0 && (
             <button className={styles.clearBtn} onClick={removeChecked} disabled={saving}>
               Remove checked ({checkedCount})
+            </button>
+          )}
+          {items.length > 0 && (
+            <button className={styles.clearBtn} onClick={clearAll} disabled={saving}>
+              Clear all
             </button>
           )}
           <button className={styles.iconBtn} onClick={load} title="Refresh">↻</button>
