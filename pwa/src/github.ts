@@ -166,7 +166,7 @@ query($owner: String!, $name: String!) {
                 name
                 path
                 type
-                object { ... on Blob { text isTruncated isBinary } }
+                object { ... on Blob { oid text isTruncated isBinary } }
               }
             }
           }
@@ -176,11 +176,85 @@ query($owner: String!, $name: String!) {
   }
 }`;
 
-type GqlBlob = { text: string | null; isTruncated: boolean; isBinary: boolean | null } | null;
+type GqlBlob = { oid: string; text: string | null; isTruncated: boolean; isBinary: boolean | null } | null;
 type GqlFile = { name: string; path: string; type: string; object: GqlBlob };
 type GqlFolder = { type: string; object: { entries?: GqlFile[] } | null };
 
-async function fetchAllTasksGraphQL(): Promise<Task[]> {
+// What we knew about each task file after the last sync, keyed by path. A file's
+// blob sha changes whenever its content does, so a matching sha means the parsed
+// task is still current and the file doesn't need downloading again. `task` is
+// null for a malformed file, remembered so it isn't re-fetched on every launch.
+type SyncedFile = { sha: string; task: Task | null };
+type SyncedFiles = Record<string, SyncedFile>;
+
+const SYNC_KEY = "tasks_sync_v1";
+// Above this many changed files, one bulk GraphQL request beats per-file fetches.
+const MAX_INCREMENTAL_FETCHES = 24;
+
+function loadSyncedFiles(repo: string): SyncedFiles {
+  try {
+    const cached = JSON.parse(localStorage.getItem(SYNC_KEY) ?? "null");
+    if (cached?.repo === repo && cached.files && typeof cached.files === "object") {
+      return cached.files;
+    }
+  } catch {
+    // Corrupt or unavailable cache: sync from scratch.
+  }
+  return {};
+}
+
+function saveSyncedFiles(repo: string, files: SyncedFiles) {
+  try {
+    localStorage.setItem(SYNC_KEY, JSON.stringify({ repo, files }));
+  } catch {
+    // Quota exceeded etc. — the cache is only an optimisation.
+  }
+}
+
+function parseSynced(path: string, sha: string, text: string): SyncedFile {
+  try {
+    return { sha, task: parseTask(path, text) };
+  } catch (err) {
+    console.warn(`Skipping malformed task file ${path}:`, err);
+    return { sha, task: null };
+  }
+}
+
+// List every file in the repo with its blob sha in one cheap request (no file
+// contents), then download only the task files whose sha we haven't seen. On a
+// typical launch that is zero to a handful of files, however many tasks exist.
+async function syncTasksIncremental(known: SyncedFiles): Promise<SyncedFiles> {
+  const { repo } = getConfig();
+  const resp = await ghFetch(`${GITHUB_API}/repos/${repo}/git/trees/HEAD?recursive=1`);
+  if (!resp.ok) throw new Error(`Tree request failed: ${resp.status} ${resp.statusText}`);
+  const json = (await resp.json()) as {
+    truncated?: boolean;
+    tree?: { path: string; type: string; sha: string }[];
+  };
+  if (json.truncated || !json.tree) throw new Error("Repository tree was truncated");
+
+  const taskFiles = json.tree.filter(
+    (e) => e.type === "blob" && /^tasks\/[^/]+\/[^/]+\.md$/.test(e.path)
+  );
+  const changed = taskFiles.filter((e) => known[e.path]?.sha !== e.sha);
+  if (changed.length > MAX_INCREMENTAL_FETCHES) return fetchAllTasksGraphQL();
+
+  const fetched = await mapWithConcurrency(changed, FETCH_CONCURRENCY, async (e) => {
+    const blobResp = await ghFetch(`${GITHUB_API}/repos/${repo}/git/blobs/${e.sha}`);
+    if (!blobResp.ok) {
+      throw new Error(`Failed to fetch ${e.path}: ${blobResp.status} ${blobResp.statusText}`);
+    }
+    const blob = await blobResp.json();
+    return parseSynced(e.path, e.sha, decodeBase64Utf8(blob.content));
+  });
+
+  const files: SyncedFiles = {};
+  for (const e of taskFiles) files[e.path] = known[e.path];
+  changed.forEach((e, i) => (files[e.path] = fetched[i]));
+  return files;
+}
+
+async function fetchAllTasksGraphQL(): Promise<SyncedFiles> {
   const [owner, name] = getConfig().repo.split("/");
   const resp = await ghFetch(`${GITHUB_API}/graphql`, {
     method: "POST",
@@ -195,7 +269,7 @@ async function fetchAllTasksGraphQL(): Promise<Task[]> {
   const repository = json.data?.repository;
   if (!repository) throw new Error("Repository not found or token lacks access");
 
-  const tasks: Task[] = [];
+  const files: SyncedFiles = {};
   // No tasks/ folder yet: an empty repo, not an error.
   for (const folder of repository.object?.entries ?? []) {
     if (folder.type !== "tree") continue;
@@ -205,27 +279,39 @@ async function fetchAllTasksGraphQL(): Promise<Task[]> {
       if (blob.isTruncated || blob.text == null) {
         throw new Error(`Task file too large for GraphQL: ${file.path}`);
       }
-      try {
-        tasks.push(parseTask(file.path, blob.text));
-      } catch (err) {
-        console.warn(`Skipping malformed task file ${file.path}:`, err);
-      }
+      files[file.path] = parseSynced(file.path, blob.oid, blob.text);
     }
   }
-  return tasks;
+  return files;
 }
 
-export async function fetchAllTasks(): Promise<Task[]> {
+// Fastest path first: incremental sync against what we already have, then one
+// bulk GraphQL request, then the slow per-file REST path as a last resort.
+async function syncTasks(known: SyncedFiles): Promise<SyncedFiles> {
+  try {
+    return await syncTasksIncremental(known);
+  } catch (err) {
+    console.warn("Incremental task sync failed, trying a full GraphQL fetch:", err);
+  }
   try {
     return await fetchAllTasksGraphQL();
   } catch (err) {
-    // e.g. a token without GraphQL access — fall back to the slow per-file path.
+    // e.g. a token without GraphQL access.
     console.warn("GraphQL task fetch failed, falling back to REST:", err);
     return fetchAllTasksRest();
   }
 }
 
-async function fetchAllTasksRest(): Promise<Task[]> {
+export async function fetchAllTasks(): Promise<Task[]> {
+  const { repo } = getConfig();
+  const files = await syncTasks(loadSyncedFiles(repo));
+  saveSyncedFiles(repo, files);
+  return Object.values(files)
+    .map((f) => f.task)
+    .filter((t): t is Task => t !== null);
+}
+
+async function fetchAllTasksRest(): Promise<SyncedFiles> {
   const lists = await getLists();
 
   // Enumerate every task file across all lists first, with bounded concurrency.
@@ -250,15 +336,12 @@ async function fetchAllTasksRest(): Promise<Task[]> {
       throw new Error(`Failed to fetch ${file.path}: ${fileResp.status} ${fileResp.statusText}`);
     }
     const data = await fileResp.json();
-    try {
-      return parseTask(file.path, decodeBase64Utf8(data.content));
-    } catch (err) {
-      console.warn(`Skipping malformed task file ${file.path}:`, err);
-      return null;
-    }
+    return parseSynced(file.path, data.sha, decodeBase64Utf8(data.content));
   });
 
-  return parsed.filter((t): t is Task => t !== null);
+  const result: SyncedFiles = {};
+  files.forEach((file, i) => (result[file.path] = parsed[i]));
+  return result;
 }
 
 export async function writeTask(task: Task, message?: string): Promise<void> {
