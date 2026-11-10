@@ -150,7 +150,82 @@ export async function getLists(): Promise<string[]> {
 
 type TaskFile = { name: string; url: string; path: string };
 
+// Every list folder and every task file's text in ONE request (same query the
+// MCP worker uses). The REST contents API needs a request per folder plus a
+// request per file, which made startup time grow with the number of tasks.
+const TASKS_QUERY = `
+query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    object(expression: "HEAD:tasks") {
+      ... on Tree {
+        entries {
+          type
+          object {
+            ... on Tree {
+              entries {
+                name
+                path
+                type
+                object { ... on Blob { text isTruncated isBinary } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
+
+type GqlBlob = { text: string | null; isTruncated: boolean; isBinary: boolean | null } | null;
+type GqlFile = { name: string; path: string; type: string; object: GqlBlob };
+type GqlFolder = { type: string; object: { entries?: GqlFile[] } | null };
+
+async function fetchAllTasksGraphQL(): Promise<Task[]> {
+  const [owner, name] = getConfig().repo.split("/");
+  const resp = await ghFetch(`${GITHUB_API}/graphql`, {
+    method: "POST",
+    body: JSON.stringify({ query: TASKS_QUERY, variables: { owner, name } }),
+  });
+  if (!resp.ok) throw new Error(`GraphQL request failed: ${resp.status} ${resp.statusText}`);
+  const json = (await resp.json()) as {
+    data?: { repository?: { object?: { entries?: GqlFolder[] } | null } | null };
+    errors?: { message: string }[];
+  };
+  if (json.errors?.length) throw new Error(json.errors.map((e) => e.message).join("; "));
+  const repository = json.data?.repository;
+  if (!repository) throw new Error("Repository not found or token lacks access");
+
+  const tasks: Task[] = [];
+  // No tasks/ folder yet: an empty repo, not an error.
+  for (const folder of repository.object?.entries ?? []) {
+    if (folder.type !== "tree") continue;
+    for (const file of folder.object?.entries ?? []) {
+      const blob = file.object;
+      if (file.type !== "blob" || !file.name.endsWith(".md") || !blob || blob.isBinary) continue;
+      if (blob.isTruncated || blob.text == null) {
+        throw new Error(`Task file too large for GraphQL: ${file.path}`);
+      }
+      try {
+        tasks.push(parseTask(file.path, blob.text));
+      } catch (err) {
+        console.warn(`Skipping malformed task file ${file.path}:`, err);
+      }
+    }
+  }
+  return tasks;
+}
+
 export async function fetchAllTasks(): Promise<Task[]> {
+  try {
+    return await fetchAllTasksGraphQL();
+  } catch (err) {
+    // e.g. a token without GraphQL access — fall back to the slow per-file path.
+    console.warn("GraphQL task fetch failed, falling back to REST:", err);
+    return fetchAllTasksRest();
+  }
+}
+
+async function fetchAllTasksRest(): Promise<Task[]> {
   const lists = await getLists();
 
   // Enumerate every task file across all lists first, with bounded concurrency.

@@ -41,7 +41,7 @@ export function TaskList({ tasks, loading, error, view, selectedId, onSelect, on
           <h2 className={styles.title}>{viewTitle(view)}</h2>
         </div>
         <div className={styles.actions}>
-          <button className={styles.iconBtn} onClick={onRefresh} title="Refresh">↺</button>
+          <button className={styles.iconBtn} onClick={onRefresh} disabled={loading} title={loading ? "Refreshing…" : "Refresh"}>↺</button>
           <button className={styles.addBtn} onClick={() => setShowAdd(true)}>+ Add Task</button>
         </div>
       </header>
@@ -65,11 +65,11 @@ export function TaskList({ tasks, loading, error, view, selectedId, onSelect, on
       )}
 
       <div className={styles.list}>
-        {loading && <div className={styles.empty}>Loading...</div>}
-        {!loading && tasks.length === 0 && (
-          <div className={styles.empty}>No tasks here.</div>
+        {/* Keep showing the tasks we already have while a refresh is in flight. */}
+        {tasks.length === 0 && (
+          <div className={styles.empty}>{loading ? "Loading..." : "No tasks here."}</div>
         )}
-        {!loading && tasks.map((task) => (
+        {tasks.map((task) => (
           <TaskCard
             key={task.id}
             task={task}
