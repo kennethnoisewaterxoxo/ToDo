@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { GitHubClient } from "./github";
+import { registerMealTools } from "./meals";
 import type { Env, Recurring, ShoppingItem, Task } from "./types";
 
 // Tool names, parameters and result shapes are carried over unchanged from the
@@ -351,6 +352,8 @@ export function buildServer(env: Env): McpServer {
     await gh.saveShoppingList([], "Clear shopping list", sha);
     return json({ cleared: true });
   });
+
+  registerMealTools(server, gh, today);
 
   return server;
 }

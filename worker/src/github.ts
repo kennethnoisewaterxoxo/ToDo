@@ -239,6 +239,24 @@ export class GitHubClient {
     if (!resp.ok) await this.fail(resp, `Failed to write ${path}`);
   }
 
+  // A single file's text and blob SHA, or null if it doesn't exist.
+  async readFile(path: string): Promise<{ text: string; sha: string } | null> {
+    const resp = await this.request(this.contentsUrl(path));
+    if (resp.status === 404) return null;
+    if (!resp.ok) await this.fail(resp, `Failed to read ${path}`);
+    const data = (await resp.json()) as { content: string; sha: string };
+    return { text: decodeBase64Utf8(data.content), sha: data.sha };
+  }
+
+  // Names of the files directly inside a folder; empty if the folder doesn't exist.
+  async listDir(path: string): Promise<string[]> {
+    const resp = await this.request(this.contentsUrl(path));
+    if (resp.status === 404) return [];
+    if (!resp.ok) await this.fail(resp, `Failed to list ${path}`);
+    const entries = (await resp.json()) as { name: string; type: string }[];
+    return Array.isArray(entries) ? entries.filter((e) => e.type === "file").map((e) => e.name) : [];
+  }
+
   async deleteFile(path: string, message: string, sha: string): Promise<void> {
     const resp = await this.request(this.contentsUrl(path), {
       method: "DELETE",

@@ -1,0 +1,401 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.hamburger {
+  display: none;
+  font-size: 20px;
+  color: var(--text-muted);
+  padding: 4px 6px;
+  border-radius: var(--radius);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.saving {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.iconBtn {
+  color: var(--text-muted);
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: var(--radius);
+}
+
+.iconBtn:hover {
+  color: var(--text);
+}
+
+.error {
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid #d9822b;
+  border-radius: var(--radius);
+  background: rgba(217, 130, 43, 0.08);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 760px;
+  width: 100%;
+}
+
+.empty {
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 60px;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.week {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.counts {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.status {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.status_changes_requested {
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.status_approved,
+.status_executed {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+
+.cardQuiet {
+  background: transparent;
+}
+
+.cardToday {
+  border-color: var(--accent);
+}
+
+.decision_approved {
+  border-left-color: var(--success);
+}
+
+.decision_replace {
+  border-left-color: var(--warning);
+}
+
+.dayRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.day {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.date {
+  font-weight: 400;
+}
+
+.todayTag {
+  margin-left: 8px;
+  color: var(--accent);
+}
+
+.approvedTag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--success);
+}
+
+.mealTitle {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.quietTitle {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.meta {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.description {
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+.linkBtn {
+  color: var(--accent);
+  font-size: 13px;
+  margin-top: 8px;
+  padding: 4px 0;
+}
+
+.recipe {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  line-height: 1.5;
+}
+
+.recipeLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: 8px 0 4px;
+}
+
+.ingredients,
+.steps {
+  padding-left: 20px;
+}
+
+.steps li {
+  margin-bottom: 6px;
+}
+
+.pantry {
+  color: var(--text-muted);
+}
+
+.pantryTag {
+  margin-left: 6px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 6px;
+}
+
+.replaceNote {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: rgba(240, 160, 96, 0.1);
+  color: var(--warning);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.decisionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.approveBtn,
+.rejectBtn,
+.replaceBtn,
+.undoBtn {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-weight: 500;
+  border: 1px solid var(--border);
+  min-height: 38px;
+}
+
+.approveBtn {
+  background: var(--success);
+  border-color: var(--success);
+  color: #0f0f17;
+}
+
+.replaceBtn {
+  background: var(--warning);
+  border-color: var(--warning);
+  color: #0f0f17;
+}
+
+.rejectBtn {
+  color: var(--danger);
+}
+
+.undoBtn {
+  color: var(--text-muted);
+}
+
+.rejectBtn:hover,
+.undoBtn:hover {
+  background: var(--surface2);
+}
+
+.rejectBox {
+  margin-top: 12px;
+}
+
+.feedback {
+  resize: vertical;
+}
+
+.approval {
+  margin-top: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.approvePlanBtn {
+  background: var(--accent);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  min-height: 42px;
+}
+
+.approvePlanBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.approvePlanBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.section {
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
+}
+
+.sectionToggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  font-weight: 600;
+  text-align: left;
+}
+
+.chevron {
+  color: var(--text-muted);
+}
+
+.markdown {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  padding-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+
+.markdown strong {
+  color: var(--text);
+}
+
+.bullet {
+  display: flex;
+  gap: 8px;
+}
+
+.mdHeading {
+  color: var(--text);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+@media (max-width: 600px) {
+  .hamburger {
+    display: block;
+  }
+
+  .header {
+    padding: 14px 12px 12px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .body {
+    padding: 12px 10px 28px;
+  }
+}

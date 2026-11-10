@@ -3,6 +3,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { addInterval, buildServer, makeId } from "../src/tools";
 import { parseTask, serializeTask } from "../src/github";
+import { serializePlan } from "../src/meals";
 import type { Env } from "../src/types";
 
 // --- A fake GitHub: GraphQL tree read + REST contents API over an in-memory repo ---
@@ -44,7 +45,13 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
   const path = decodeURIComponent(url.pathname.replace(/^\/repos\/owner\/repo\/contents\//, ""));
   const file = files.get(path);
   if (method === "GET") {
-    if (!file) return new Response("", { status: 404 });
+    if (!file) {
+      // A folder: list the files directly inside it, like the contents API does.
+      const names = [...files.keys()]
+        .filter((p) => p.startsWith(`${path}/`) && !p.slice(path.length + 1).includes("/"))
+        .map((p) => ({ name: p.slice(path.length + 1), type: "file" }));
+      return names.length ? Response.json(names) : new Response("", { status: 404 });
+    }
     return Response.json({ content: b64(file.text), sha: String(file.sha) });
   }
   const body = JSON.parse(String(init.body));
@@ -212,5 +219,104 @@ describe("tools", () => {
     expect(await call("remove_shopping_item", { item_id: "nope" })).toEqual({ error: "Item nope not found" });
     await call("clear_shopping_list");
     expect(await call("get_shopping_list")).toEqual([]);
+  });
+});
+
+describe("meal plan tools", () => {
+  const meal = (title: string, over: Record<string, unknown> = {}) => ({
+    title,
+    source: { type: "ai" },
+    ingredients: [{ name: "crème fraîche", qty: 200, unit: "ml" }, { name: "salt", pantry: true }],
+    steps: ["Cook it."],
+    ...over,
+  });
+  const plan = (over: Record<string, unknown> = {}) => ({
+    week: "2026-11-09",
+    days: [
+      { date: "2026-11-09", kind: "cook", meal: meal("Salmon") },
+      { date: "2026-11-10", kind: "open", title: "Open" },
+      { date: "2026-11-11", kind: "cook", meal: meal("Curry") },
+      { date: "2026-11-12", kind: "leftover", title: "Leftover curry", leftover_of: ["2026-11-11"] },
+    ],
+    ...over,
+  });
+  // What the app does when the reviewer acts: rewrite the stored file.
+  const edit = async (call: any, change: (p: any) => void) => {
+    const p = await call("get_meal_plan");
+    change(p);
+    put("meals/2026-11-09.yaml", serializePlan(p));
+  };
+
+  it("saves a draft and returns the most recent plan by default", async () => {
+    const call = await connect();
+    expect(await call("get_meal_plan")).toEqual({ error: "No meal plans yet" });
+    await call("save_meal_plan", { plan: plan({ week: "2026-11-02", days: [{ date: "2026-11-02", kind: "open" }] }) });
+    expect(await call("save_meal_plan", { plan: plan() })).toEqual({ saved: "2026-11-09", status: "draft", days: 4 });
+
+    const got = await call("get_meal_plan");
+    expect(got).toMatchObject({ week: "2026-11-09", status: "draft", generated: "2026-10-08" });
+    expect(got.days[0].meal).toMatchObject({ title: "Salmon", decision: "pending" });
+    expect(got.days[0].meal.ingredients[0].name).toBe("crème fraîche");
+    expect((await call("get_meal_plan", { week: "2026-11-02" })).days).toHaveLength(1);
+    // Dates stay strings in the file, so the app's plain YAML read sees strings too.
+    expect(files.get("meals/2026-11-09.yaml")!.text).toContain("week: '2026-11-09'");
+  });
+
+  it("rejects plans that break the rules", async () => {
+    const call = await connect();
+    const bad = async (over: Record<string, unknown>) => (await call("save_meal_plan", { plan: plan(over) })).error;
+    expect(await bad({ week: "2026-11-10" })).toMatch(/not a Monday/);
+    expect(await bad({ days: [{ date: "2026-11-20", kind: "open" }] })).toMatch(/outside the week/);
+    expect(await bad({ days: [{ date: "2026-11-09", kind: "cook" }] })).toMatch(/needs a meal/);
+    expect(await bad({ days: [{ date: "2026-11-09", kind: "open" }, { date: "2026-11-09", kind: "open" }] })).toMatch(
+      /appears twice/
+    );
+    expect(files.size).toBe(0);
+  });
+
+  it("swaps in a replacement meal and clears the change request", async () => {
+    const call = await connect();
+    await call("save_meal_plan", { plan: plan() });
+    await edit(call, (p) => {
+      p.status = "changes_requested";
+      p.days[0].meal.decision = "approved";
+      p.days[2].meal.decision = "replace";
+      p.days[2].meal.feedback = "Too rich";
+    });
+    expect((await call("get_meal_plan")).days[2].meal).toMatchObject({ decision: "replace", feedback: "Too rich" });
+
+    const res = await call("update_meal_plan_day", {
+      week: "2026-11-09",
+      day: { date: "2026-11-11", kind: "cook", meal: meal("Stir-fry") },
+    });
+    expect(res).toEqual({ updated: "2026-11-11", status: "draft" });
+    const got = await call("get_meal_plan");
+    expect(got.revised).toBe("2026-10-08");
+    expect(got.days[2].meal).toMatchObject({ title: "Stir-fry", decision: "pending" });
+    expect(got.days[0].meal.decision).toBe("approved");
+
+    expect(
+      await call("update_meal_plan_day", { week: "2026-11-09", day: { date: "2026-11-15", kind: "open" } })
+    ).toEqual({ error: "2026-11-15 is not a night in the plan for 2026-11-09" });
+  });
+
+  it("only records execution for an approved plan, and protects it from being overwritten", async () => {
+    const call = await connect();
+    await call("save_meal_plan", { plan: plan() });
+    expect((await call("record_meal_plan_execution", { week: "2026-11-09", execution: "x" })).error).toMatch(
+      /not approved/
+    );
+
+    await edit(call, (p) => { p.status = "approved"; });
+    expect((await call("save_meal_plan", { plan: plan() })).error).toMatch(/already approved/);
+    expect(
+      (await call("update_meal_plan_day", { week: "2026-11-09", day: { date: "2026-11-10", kind: "open" } })).error
+    ).toMatch(/already approved/);
+
+    expect(await call("record_meal_plan_execution", { week: "2026-11-09", execution: "Cart loaded — 28 items" })).toEqual({
+      executed: "2026-11-09",
+    });
+    expect(await call("get_meal_plan")).toMatchObject({ status: "executed", execution: "Cart loaded — 28 items" });
+    expect((await call("save_meal_plan", { plan: plan(), overwrite_approved: true })).saved).toBe("2026-11-09");
   });
 });

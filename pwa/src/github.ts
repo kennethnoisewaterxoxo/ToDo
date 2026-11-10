@@ -1,5 +1,5 @@
 import yaml from "js-yaml";
-import type { Task, ShoppingItem } from "./types";
+import type { Task, ShoppingItem, MealPlan } from "./types";
 
 const GITHUB_API = "https://api.github.com";
 
@@ -434,4 +434,49 @@ export async function saveShoppingList(items: ShoppingItem[], message = "Update 
     body: JSON.stringify(body),
   });
   if (!resp.ok) throw new Error(`Failed to save shopping list: ${resp.statusText}`);
+}
+
+// --- Meal plan ---
+
+export type StoredMealPlan = { plan: MealPlan; sha: string };
+
+// The most recent week's plan, or null if there are none yet.
+export async function fetchLatestMealPlan(): Promise<StoredMealPlan | null> {
+  const listing = await ghFetch(repoUrl("meals"));
+  if (listing.status === 404) return null;
+  if (!listing.ok) throw new Error(`Failed to list meal plans: ${listing.status} ${listing.statusText}`);
+  const names = ((await listing.json()) as { name: string }[])
+    .map((f) => f.name)
+    .filter((n) => /^\d{4}-\d{2}-\d{2}\.yaml$/.test(n))
+    .sort();
+  const latest = names[names.length - 1];
+  if (!latest) return null;
+
+  const resp = await ghFetch(repoUrl(`meals/${latest}`));
+  if (!resp.ok) throw new Error(`Failed to fetch meal plan: ${resp.status} ${resp.statusText}`);
+  const data = await resp.json();
+  // CORE_SCHEMA keeps dates as strings even if a hand edit drops the quotes.
+  const plan = yaml.load(decodeBase64Utf8(data.content), { schema: yaml.CORE_SCHEMA }) as MealPlan;
+  return { plan, sha: data.sha };
+}
+
+// Thrown when the plan changed on GitHub (e.g. Claude revised it) after we read it.
+export class MealPlanConflictError extends Error {}
+
+// Writes the plan back and returns the new blob sha. Passing the sha we read
+// makes GitHub reject the write if the file changed in between, instead of
+// overwriting a revision Claude just saved.
+export async function saveMealPlan(plan: MealPlan, sha: string, message: string): Promise<string> {
+  const text = yaml.dump(plan, { lineWidth: -1, skipInvalid: true });
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  const resp = await fetch(repoUrl(`meals/${plan.week}.yaml`), {
+    method: "PUT",
+    headers: headers(),
+    body: JSON.stringify({ message, content: btoa(binary), sha }),
+  });
+  if (resp.status === 409) throw new MealPlanConflictError("The meal plan was changed elsewhere.");
+  if (!resp.ok) throw new Error(`Failed to save meal plan: ${resp.status} ${resp.statusText}`);
+  return (await resp.json()).content.sha;
 }
