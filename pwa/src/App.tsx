@@ -5,11 +5,12 @@ import { Sidebar } from "./components/Sidebar";
 import { TaskList } from "./components/TaskList";
 import { TaskDetail } from "./components/TaskDetail";
 import { ShoppingList } from "./components/ShoppingList";
+import { MealPlan } from "./components/MealPlan";
 import { useTasks } from "./hooks/useTasks";
 import type { Task } from "./types";
 import styles from "./App.module.css";
 
-export type View = "today" | "overdue" | "all" | "shopping" | { list: string };
+export type View = "today" | "overdue" | "all" | "shopping" | "meals" | { list: string };
 
 export default function App() {
   const [configured, setConfigured] = useState(isConfigured());
@@ -17,7 +18,7 @@ export default function App() {
   const [selected, setSelected] = useState<Task | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingConnection, setEditingConnection] = useState(false);
-  const { tasks, loading, error, refresh, completeTask, updateTask, addTask, deleteTask } = useTasks();
+  const { tasks, loading, error, refresh, completeTask, updateTask, addTask, deleteTask, removeList } = useTasks();
 
   useEffect(() => {
     if (configured) refresh();
@@ -44,6 +45,20 @@ export default function App() {
     if (selected?.id === task.id) setSelected(null);
   }, [deleteTask, selected]);
 
+  // A list can be removed once nothing in it is still open.
+  const listTasks = typeof view === "object" ? tasks.filter((t) => t.list === view.list) : [];
+  const removableList =
+    typeof view === "object" && listTasks.length > 0 && listTasks.every((t) => t.status === "complete")
+      ? view.list
+      : null;
+
+  // TaskList asks for confirmation and shows any error.
+  const handleRemoveList = async () => {
+    if (!removableList) return;
+    await removeList(removableList, listTasks);
+    setView("today");
+  };
+
   if (!configured) {
     return <Setup onConfigured={() => setConfigured(true)} />;
   }
@@ -65,7 +80,7 @@ export default function App() {
       )}
       <Sidebar
         view={view}
-        onViewChange={(v) => { setView(v); setSidebarOpen(false); if (v === "shopping") setSelected(null); }}
+        onViewChange={(v) => { setView(v); setSidebarOpen(false); if (v === "shopping" || v === "meals") setSelected(null); }}
         lists={lists}
         tasks={tasks}
         isOpen={sidebarOpen}
@@ -75,6 +90,8 @@ export default function App() {
       <main className={styles.main}>
         {view === "shopping" ? (
           <ShoppingList onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+        ) : view === "meals" ? (
+          <MealPlan onToggleSidebar={() => setSidebarOpen((o) => !o)} />
         ) : (
           <TaskList
             tasks={visibleTasks}
@@ -86,6 +103,7 @@ export default function App() {
             onComplete={handleComplete}
             onRefresh={refresh}
             onAddTask={addTask}
+            removable={removableList ? { completed: listTasks.length, remove: handleRemoveList } : undefined}
             onToggleSidebar={() => setSidebarOpen((o) => !o)}
           />
         )}

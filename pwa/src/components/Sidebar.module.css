@@ -6,7 +6,7 @@
   flex-direction: column;
   padding: 16px 8px;
   gap: 8px;
-  overflow-y: auto;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
@@ -120,9 +120,88 @@
   color: white !important;
 }
 
-/* Pinned to the bottom of the sidebar, below the lists. */
+/* The to-do views and lists: the only part of the sidebar that scrolls. */
+.todos {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Shopping and meal plan: not to-do lists, so they get their own pinned block of tiles. */
+.kitchen {
+  flex-shrink: 0;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 2px 4px 4px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-muted);
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.tile:hover {
+  color: var(--text);
+}
+
+.tileActive {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.tileIcon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.tileLabel {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Pinned to the bottom of the sidebar. */
 .footer {
-  margin-top: auto;
+  flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid var(--border);
+}
+
+/* The "Lists" heading doubles as the fold/unfold control. */
+.sectionToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  padding: 8px 12px 4px;
+  text-align: left;
+}
+
+.sectionToggle:hover {
+  color: var(--text);
+}
+
+.chevron {
+  font-size: 12px;
 }

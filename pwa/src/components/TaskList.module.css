@@ -120,3 +120,50 @@
     padding: 7px 12px;
   }
 }
+
+.removeListBtn {
+  margin-top: 16px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.removeListBtn:hover:not(:disabled) {
+  background: var(--surface2);
+}
+
+.removeListBtn:disabled {
+  opacity: 0.5;
+}
+
+.removeConfirm {
+  margin-top: 16px;
+  line-height: 1.4;
+}
+
+.removeActions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cancelBtn {
+  margin-top: 16px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: var(--surface2);
+}
+
+.removeError {
+  margin-top: 12px;
+  color: var(--danger);
+  font-size: 13px;
+}

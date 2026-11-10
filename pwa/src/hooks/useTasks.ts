@@ -137,5 +137,19 @@ export function useTasks() {
     setTasks((prev) => prev.filter((t) => t.id !== task.id));
   }, []);
 
-  return { tasks, loading, error, refresh, completeTask, updateTask, addTask, deleteTask };
+  // Remove a list that has no open tasks. A list is just a folder of task
+  // files, so this deletes the completed tasks that are keeping it alive.
+  const removeList = useCallback(async (list: string, inList: Task[]) => {
+    if (inList.some((t) => t.list !== list || t.status !== "complete")) {
+      throw new Error("Only a list with no open tasks can be removed");
+    }
+    // One at a time: each delete is its own commit, and parallel commits collide.
+    for (const task of inList) {
+      await ghDeleteTask(task, `Remove list ${list}: delete completed task ${task.title}`);
+      editSeq.current++;
+      setTasks((prev) => prev.filter((t) => t.id !== task.id));
+    }
+  }, []);
+
+  return { tasks, loading, error, refresh, completeTask, updateTask, addTask, deleteTask, removeList };
 }
